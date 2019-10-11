@@ -1,0 +1,17 @@
+{
+  "name": "sam-cognito-auth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "config": {
+    "stackName": "learning-serverless-sam-cognito-auth",
+    "bucketName": "<your-bucket>"
+  },
+  "scripts": {
+    "deploy": "sam build --region us-east-1 && sam package --template-file template.yml --s3-bucket $npm_package_config_bucketName --output-template-file packaged.yaml && sam deploy --region us-east-1 --template-file packaged.yaml --stack-name $npm_package_config_stackName --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM && aws cloudformation describe-stacks --stack-name $npm_package_config_stackName --region us-east-1 --query 'Stacks[].Outputs'",
+    "describe": "aws cloudformation describe-stacks --region us-east-1 --stack-name $npm_package_config_stackName --query 'Stacks[].Outputs'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
