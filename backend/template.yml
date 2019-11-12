@@ -12,9 +12,11 @@ Resources:
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
       Auth:
-        DefaultAuthorizer: AWS_IAM
-        InvokeRole: NONE 
+        DefaultAuthorizer: MyCognitoUserPoolAuthorizer
         AddDefaultAuthorizerToCorsPreflight: False
+        Authorizers: 
+          MyCognitoUserPoolAuthorizer:
+            UserPoolArn: !GetAtt MyCognitoUserPool.Arn 
     
   HelloFunction:
     Type: 'AWS::Serverless::Function'
@@ -30,10 +32,10 @@ Resources:
             Path: /hello
             Method: GET
   
-  CognitoUserPool:
+  MyCognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: sam_cognito_auth_cognito_user_pool
+      UserPoolName: sam_api_gateway_cup_auth_cognito_user_pool
       LambdaConfig:
         PreSignUp: !GetAtt PreSignupLambdaFunction.Arn
       Policies:
@@ -49,8 +51,8 @@ Resources:
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      ClientName: sam_cognito_auth_cognito_client
-      UserPoolId: !Ref CognitoUserPool
+      ClientName: sam_api_gateway_cup_auth_cognito_client
+      UserPoolId: !Ref MyCognitoUserPool
   
   PreSignupLambdaFunction:
     Type: AWS::Serverless::Function
@@ -71,95 +73,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt PreSignupLambdaFunction.Arn
       Principal: cognito-idp.amazonaws.com
-      SourceArn: !Sub 'arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPool}'
-
-  CognitoIdentityPool:
-    Type: AWS::Cognito::IdentityPool
-    Properties:
-      IdentityPoolName: sam_cognito_auth_identity_pool
-      AllowUnauthenticatedIdentities: false
-      CognitoIdentityProviders:
-        - ClientId:
-            Ref: CognitoUserPoolClient
-          ProviderName:
-            Fn::GetAtt: [CognitoUserPool, ProviderName]
-
-  CognitoIdentityPoolRoles:
-    Type: AWS::Cognito::IdentityPoolRoleAttachment
-    Properties:
-      IdentityPoolId:
-        Ref: CognitoIdentityPool
-      Roles:
-        authenticated:
-          Fn::GetAtt: [CognitoAuthRole, Arn]
-        unauthenticated:
-          Fn::GetAtt: [CognitoUnauthRole, Arn]
-
-  CognitoAuthRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: sam_cognito_auth_appAuthRole
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Federated: "cognito-identity.amazonaws.com"
-            Action:
-              - "sts:AssumeRoleWithWebIdentity"
-            Condition:
-              StringEquals:
-                "cognito-identity.amazonaws.com:aud":
-                  Ref: CognitoIdentityPool
-              "ForAnyValue:StringLike":
-                "cognito-identity.amazonaws.com:amr": authenticated
-      Policies:
-        - PolicyName: "CognitoAuthorizedPolicy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "mobileanalytics:PutEvents"
-                  - "cognito-sync:*"
-                  - "cognito-identity:*"
-                Resource: "*"
-              - Effect: "Allow"
-                Action:
-                  - "execute-api:Invoke"
-                Resource: "*"
-
-  CognitoUnauthRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: sam_cognito_auth_appUnauthRole
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Federated: "cognito-identity.amazonaws.com"
-            Action:
-              - "sts:AssumeRoleWithWebIdentity"
-            Condition:
-              StringEquals:
-                "cognito-identity.amazonaws.com:aud":
-                  Ref: CognitoIdentityPool
-              "ForAnyValue:StringLike":
-                "cognito-identity.amazonaws.com:amr": unauthenticated
-      Policies:
-        - PolicyName: "CognitoUnauthorizedPolicy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "mobileanalytics:PutEvents"
-                  - "cognito-sync:*"
-                  - "cognito-identity:*"
-                Resource: "*"
+      SourceArn: !Sub 'arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${MyCognitoUserPool}'
 
 Outputs:
   Region:
@@ -176,12 +90,8 @@ Outputs:
   
   CognitoUserPoolId:
     Description: "Cognito User Pool Id"
-    Value: !Ref CognitoUserPool
+    Value: !Ref MyCognitoUserPool
 
   CognitoUserPoolClientId:
     Description: "Cognito User Pool Client Id"
     Value: !Ref CognitoUserPoolClient
-
-  CognitoIdentityPoolId:
-    Description: "Cognito Identity Pool Id"
-    Value: !Ref CognitoIdentityPool

@@ -1,5 +1,4 @@
-import { LinkContainer } from 'react-router-bootstrap';
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import { Link, withRouter } from 'react-router-dom';
 
 import { Nav, Navbar, NavItem } from 'react-bootstrap';
@@ -42,6 +41,7 @@ class App extends Component {
 		this.userHasAuthenticated(false);
 		this.props.history.push('/login');
 	};
+
 	render() {
 		const childProps = {
 			isAuthenticated: this.state.isAuthenticated,
@@ -58,18 +58,8 @@ class App extends Component {
 					</Navbar.Header>
 					<Navbar.Collapse>
 						<Nav pullRight>
-							{this.state.isAuthenticated ? (
-								<NavItem onClick={this.handleLogout}>Logout</NavItem>
-							) : (
-								<Fragment>
-									<LinkContainer to="/signup">
-										<NavItem>Signup</NavItem>
-									</LinkContainer>
-									<LinkContainer to="/login">
-										<NavItem>Login</NavItem>
-									</LinkContainer>
-								</Fragment>
-							)}
+							<NavItem onClick={() => Auth.federatedSignIn()}>Open Hosted UI</NavItem>
+							<NavItem onClick={this.handleLogout}>Logout</NavItem>
 						</Nav>
 					</Navbar.Collapse>
 				</Navbar>

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { PageHeader, ListGroup } from 'react-bootstrap';
-import { API } from 'aws-amplify';
+import { API, Auth } from 'aws-amplify';
 import './Home.css';
 
 export default class Home extends Component {
@@ -13,19 +13,32 @@ export default class Home extends Component {
 		};
 	}
 
+	async isAuth() {
+		const result = await Auth.currentAuthenticatedUser().then(user => {
+			console.log(user);
+			return true;
+		}).catch(e => {
+			console.log(e);
+			return false;
+		});
+
+		return result;
+	}
+
 	async componentDidMount() {
-		if (!this.props.isAuthenticated) {
+		const auth = await this.isAuth();
+		if (!auth) {
 			return;
-		}
+		} else {
+			try {
+				const testApiCall = await this.testApiCall();
+				this.setState({ testApiCall });
+			} catch (e) {
+				alert(e);
+			}
 
-		try {
-			const testApiCall = await this.testApiCall();
-			this.setState({ testApiCall });
-		} catch (e) {
-			alert(e);
+			this.setState({ isLoading: false });
 		}
-
-		this.setState({ isLoading: false });
 	}
 
 	testApiCall() {
@@ -34,7 +47,7 @@ export default class Home extends Component {
 
 	renderTestAPI(testApiCall) {
 		console.log(testApiCall);
-		return testApiCall;
+		return testApiCall.message;
 	}
 
 	renderLander() {

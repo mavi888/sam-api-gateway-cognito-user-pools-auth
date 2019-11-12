@@ -4,6 +4,6 @@ exports.hello = async (event) => {
     headers: {
       'Access-Control-Allow-Origin': '*'
     },
-    body: 'Authenticated call!'
+    body: JSON.stringify({ message: 'Authenticated call!' })
   }
 }
