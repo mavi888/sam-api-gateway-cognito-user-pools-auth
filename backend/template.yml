@@ -22,7 +22,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: handler.hello
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       CodeUri: ./hello
       Events:
         HelloAPI:
@@ -53,7 +53,25 @@ Resources:
     Properties:
       ClientName: sam_api_gateway_cup_auth_cognito_client
       UserPoolId: !Ref MyCognitoUserPool
-  
+      SupportedIdentityProviders:
+        - COGNITO
+      CallbackURLs:
+        - http://localhost:3000/
+      LogoutURLs:
+        - http://localhost:3000/
+      AllowedOAuthFlows:
+        - implicit
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref MyApi
+      UserPoolId: !Ref MyCognitoUserPool
+
   PreSignupLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -64,7 +82,7 @@ Resources:
         }
       Handler: index.handler
       MemorySize: 128
-      Runtime: nodejs8.10
+      Runtime: nodejs12.x
       Timeout: 3
 
   LambdaCognitoUserPoolExecutionPermission:
